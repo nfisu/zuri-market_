@@ -1,0 +1,25 @@
+# Dependencies — re-installed inside the container by `npm install`
+node_modules
+
+# Secrets — NEVER baked into images
+.env
+.env.local
+.env.*.local
+
+# Build artifacts and logs
+*.log
+npm-debug.log*
+coverage/
+
+# Git history — no need inside the image
+.git
+.gitignore
+
+# Docker files — not needed inside the image they describe
+Dockerfile
+.dockerignore
+
+# OS / editor
+.DS_Store
+.vscode
+.idea

@@ -1,0 +1,28 @@
+# Dependencies — re-installed inside the build stage
+node_modules
+
+# Build output — produced inside the container
+dist
+
+# Secrets — never enter the image
+.env
+.env.local
+.env.*.local
+
+# Logs and coverage
+*.log
+npm-debug.log*
+coverage/
+
+# Git history
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# OS / editor
+.DS_Store
+.vscode
+.idea
