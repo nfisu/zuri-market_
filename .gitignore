@@ -1,0 +1,40 @@
+# ============================================
+# Zuri Market — root .gitignore
+# Per-app ignores live in backend/.gitignore and frontend/.gitignore
+# ============================================
+
+# AWS credentials — must never be committed
+.aws/
+**/credentials
+**/aws-credentials
+
+# Terraform — state contains sensitive resource IDs and possibly secrets
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform/
+**/.terraform.lock.hcl
+**/crash.log
+**/crash.*.log
+
+# Terraform variables files holding secret values
+**/*.tfvars
+**/*.tfvars.json
+# but allow the example so teammates know which vars to set
+!**/*.tfvars.example
+
+# SSH keys — match by both pattern AND filename
+ssh-key
+ssh-key.pub
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+**/.ssh/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
