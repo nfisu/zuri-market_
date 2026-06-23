@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: nfisu/zuri-market-frontend:v1.2
+          image: nfisu/zuri-market-frontend:v1.3
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

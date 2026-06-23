@@ -1,7 +1,7 @@
 // Small fetch wrapper for the Zuri Market backend.
 // VITE_API_URL is set in .env and embedded at build time.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {
