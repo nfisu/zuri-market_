@@ -32,6 +32,15 @@ resource "aws_security_group" "ec2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Kubernetes API — only from your IP (kubectl access)
+  ingress {
+    description = "k3s API from home"
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = [var.home_ip_cidr]
+  }
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
