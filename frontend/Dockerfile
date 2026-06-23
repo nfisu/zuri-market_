@@ -20,7 +20,7 @@ COPY . .
 # Build-time environment variables.
 # Vite embeds VITE_* values into the bundle at BUILD time, not runtime.
 # Default to localhost:4000 for safety; in CI/CD we override these with --build-arg.
-ARG VITE_API_URL=http://localhost:4000
+ARG VITE_API_URL=""
 ARG VITE_STORE_NAME="Zuri Market"
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_STORE_NAME=$VITE_STORE_NAME

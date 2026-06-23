@@ -1,0 +1,10 @@
+# Zuri Market — Kubernetes namespace
+# Logical grouping for all Zuri Market resources in the cluster.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zuri-market
+  labels:
+    app: zuri-market
+    managed-by: kubectl

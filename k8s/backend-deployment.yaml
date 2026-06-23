@@ -1,0 +1,57 @@
+# Zuri Market — Backend Deployment
+# Runs the Express API as a managed pod with auto-restart and health checks.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: zuri-market
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: nfisu/zuri-market-backend:v1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4000
+          env:
+            - name: PORT
+              value: "4000"
+            - name: STORE_NAME
+              value: "Zuri Market"
+            - name: CURRENCY
+              value: "GBP"
+            - name: API_SECRET_KEY
+              value: "placeholder-replaced-by-aws-secrets-manager-in-phase-5"
+            - name: ALLOWED_ORIGINS
+              value: "*"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
