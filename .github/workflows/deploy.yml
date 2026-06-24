@@ -1,0 +1,106 @@
+# Zuri Market — CI/CD Pipeline
+# Runs on every push to main. Builds + pushes Docker images, then
+# deploys to the k3s cluster on EC2.
+
+name: Deploy Zuri Market
+
+on:
+  push:
+    branches:
+      - main
+  # Allow manual runs from GitHub UI
+  workflow_dispatch:
+
+# Use the commit SHA as the image tag — every push gets a unique, traceable image
+env:
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  # ============================================
+  # JOB 1: Build & push Docker images
+  # ============================================
+  build-and-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            nfisu/zuri-market-backend:${{ env.IMAGE_TAG }}
+            nfisu/zuri-market-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            nfisu/zuri-market-frontend:${{ env.IMAGE_TAG }}
+            nfisu/zuri-market-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # JOB 2: Deploy to k3s on EC2
+  # ============================================
+  deploy:
+    name: Deploy to k3s
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    # Only deploy if EC2_HOST secret is set (skip when AWS is destroyed)
+    if: ${{ vars.EC2_HOST != '' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/ssh-key
+          chmod 600 ~/.ssh/ssh-key
+          ssh-keyscan -H ${{ vars.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Update image tags in manifests
+        run: |
+          # Pin the deployment manifests to this commit's image tag
+          sed -i "s|nfisu/zuri-market-backend:.*|nfisu/zuri-market-backend:${{ env.IMAGE_TAG }}|" k8s/backend-deployment.yaml
+          sed -i "s|nfisu/zuri-market-frontend:.*|nfisu/zuri-market-frontend:${{ env.IMAGE_TAG }}|" k8s/frontend-deployment.yaml
+
+      - name: Copy manifests to EC2
+        run: |
+          scp -i ~/.ssh/ssh-key -r k8s ec2-user@${{ vars.EC2_HOST }}:/home/ec2-user/
+
+      - name: Apply manifests on EC2
+        run: |
+          ssh -i ~/.ssh/ssh-key ec2-user@${{ vars.EC2_HOST }} '
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+            kubectl apply -f /home/ec2-user/k8s/namespace.yaml
+            kubectl apply -f /home/ec2-user/k8s/backend-deployment.yaml
+            kubectl apply -f /home/ec2-user/k8s/backend-service.yaml
+            kubectl apply -f /home/ec2-user/k8s/frontend-deployment.yaml
+            kubectl apply -f /home/ec2-user/k8s/frontend-service.yaml
+            kubectl apply -f /home/ec2-user/k8s/ingress.yaml
+            kubectl rollout status -n zuri-market deploy/backend --timeout=120s
+            kubectl rollout status -n zuri-market deploy/frontend --timeout=120s
+          '
