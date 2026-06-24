@@ -26,8 +26,7 @@ const products = [
   { id: "hme-001", name: "Bolga Woven Basket, Natural", category: "homeware", price: 5400, rating: 4.7, reviews: 152, stock: 27, image: "https://images.unsplash.com/photo-1626037235530-fe56de7d6459?w=600&h=600&fit=crop", featured: true, artisan: "Bolgatanga Weavers" },
   { id: "hme-002", name: "Mudcloth Throw Pillow Cover", category: "homeware", price: 3200, rating: 4.6, reviews: 94, stock: 38, image: "https://images.unsplash.com/photo-1618941026766-87a1bd06ef26?w=600&h=600&fit=crop", featured: false, artisan: "Bamako Textiles, Mali" },
   { id: "hme-003", name: "Calabash Serving Bowl, Hand-Carved", category: "homeware", price: 4100, rating: 4.8, reviews: 61, stock: 19, image: "https://images.unsplash.com/photo-1766507338015-dff28d72a40c?w=600&h=600&fit=crop", featured: true, artisan: "Yoruba Crafts Collective" },
-  { id: "hme-004", name: "Soapstone Candle Holder Set", category: "homeware", price: 2900, rating: 4.5, reviews: 73, stock: 44, image: "https://images.unsplash.com/photo-1723645278449-c807b418fd2a?w=600&h=600&fit=crop", featured: false, artisan: "Kisii Stoneworks, Kenya" }
-];
+  { id: "hme-004", name: "Soapstone Candle Holder Set", category: "homeware", price: 2900, rating: 4.5, reviews: 73, stock: 44, image: "https://images.unsplash.com/photo-1672518194432-4c23cbcec1c4?w=600&h=600&fit=crop", featured: false, artisan: "Kisii Stoneworks, Kenya" }];
 
 const categories = [
   { id: "all", label: "All" },
