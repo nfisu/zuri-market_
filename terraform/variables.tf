@@ -42,3 +42,10 @@ variable "ssh_public_key" {
   type        = string
   # No default — must be provided in terraform.tfvars
 }
+
+variable "backend_api_secret_key" {
+  description = "Secret value for backend API authentication"
+  type        = string
+  sensitive   = true
+  # No default — must be provided in terraform.tfvars
+}

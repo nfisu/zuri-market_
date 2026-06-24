@@ -1,5 +1,6 @@
-# Zuri Market — Backend Deployment
-# Runs the Express API as a managed pod with auto-restart and health checks.
+# Zuri Market — Backend Deployment with init container for secrets
+# Init container uses the EC2's IAM role to fetch the secret from AWS Secrets
+# Manager before the backend starts. No CSI driver needed.
 
 apiVersion: apps/v1
 kind: Deployment
@@ -18,6 +19,34 @@ spec:
       labels:
         app: backend
     spec:
+      # ============================================
+      # INIT CONTAINER: fetch secret from AWS
+      # ============================================
+      initContainers:
+        - name: fetch-secrets
+          image: amazon/aws-cli:2.17.0
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "Fetching API_SECRET_KEY from AWS Secrets Manager..."
+              aws secretsmanager get-secret-value \
+                --region eu-west-2 \
+                --secret-id zuri-market/backend \
+                --query 'SecretString' \
+                --output text \
+                | sed -n 's/.*"API_SECRET_KEY":"\([^"]*\)".*/\1/p' \
+                > /shared-secrets/API_SECRET_KEY
+              echo "Done. Files written:"
+              ls -la /shared-secrets/
+          volumeMounts:
+            - name: shared-secrets
+              mountPath: /shared-secrets
+
+      # ============================================
+      # MAIN CONTAINER: backend
+      # ============================================
       containers:
         - name: backend
           image: nfisu/zuri-market-backend:v1.0
@@ -25,6 +54,12 @@ spec:
           ports:
             - name: http
               containerPort: 4000
+          command:
+            - sh
+            - -c
+            - |
+              export API_SECRET_KEY=$(cat /shared-secrets/API_SECRET_KEY)
+              exec node server.js
           env:
             - name: PORT
               value: "4000"
@@ -32,10 +67,12 @@ spec:
               value: "Zuri Market"
             - name: CURRENCY
               value: "GBP"
-            - name: API_SECRET_KEY
-              value: "placeholder-replaced-by-aws-secrets-manager-in-phase-5"
             - name: ALLOWED_ORIGINS
               value: "*"
+          volumeMounts:
+            - name: shared-secrets
+              mountPath: /shared-secrets
+              readOnly: true
           resources:
             requests:
               memory: "128Mi"
@@ -55,3 +92,11 @@ spec:
               port: 4000
             initialDelaySeconds: 5
             periodSeconds: 10
+
+      # ============================================
+      # SHARED VOLUME
+      # ============================================
+      volumes:
+        - name: shared-secrets
+          emptyDir:
+            medium: Memory

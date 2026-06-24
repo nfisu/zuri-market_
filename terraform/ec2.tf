@@ -1,5 +1,6 @@
 # Zuri Market — EC2 Instance
 # The application server running in the public subnet.
+# Bootstrap installs Docker + k3s + Helm + AWS Secrets Store CSI Driver.
 
 # Latest Amazon Linux 2023 AMI (eu-west-2)
 data "aws_ami" "amazon_linux" {
@@ -12,42 +13,37 @@ data "aws_ami" "amazon_linux" {
 }
 
 # --- Bootstrap script ---
-# Runs once on first boot. Installs Docker + k3s, makes kubeconfig readable,
-# and adds the public IP to the k3s TLS cert so we can reach it from outside.
+# Uses <<EOF (NOT <<-EOF) so leading whitespace inside is preserved literally.
+# The bash inside must be flush-left so the shebang is at column 1.
 locals {
-  user_data = <<-EOF
-    #!/bin/bash
-    set -euxo pipefail
+  user_data = <<EOF
+#!/bin/bash
+set -euxo pipefail
 
-    # Update OS packages
-    dnf update -y
-    dnf install -y docker
+# Update OS packages
+dnf update -y
+dnf install -y docker
 
-    # Start Docker (handy for debugging k3s containers later)
-    systemctl enable --now docker
-    usermod -aG docker ec2-user
+# Start Docker
+systemctl enable --now docker
+usermod -aG docker ec2-user
 
-    # Fetch the public IP via IMDSv2 (Amazon Linux 2023 requires the token)
-    TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" \
-      -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-    PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
-      http://169.254.169.254/latest/meta-data/public-ipv4)
+# Fetch the public IP via IMDSv2
+TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
 
-    # Install k3s
-    # --write-kubeconfig-mode 644: readable without sudo
-    # --tls-san $PUBLIC_IP: adds public IP to the cert so kubectl from laptop works
-    curl -sfL https://get.k3s.io | \
-      INSTALL_K3S_EXEC="--write-kubeconfig-mode 644 --tls-san $PUBLIC_IP" sh -
+# Install k3s with public IP added to TLS cert
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--write-kubeconfig-mode 644 --tls-san $PUBLIC_IP" sh -
 
-    # Wait for k3s to be Ready before declaring success
-    until kubectl get nodes 2>/dev/null | grep -q ' Ready'; do
-      sleep 2
-    done
+# Wait for k3s to be Ready
+until kubectl get nodes 2>/dev/null | grep -q ' Ready'; do
+  sleep 2
+done
 
-    # Mark provisioning complete (used by humans to confirm bootstrap finished)
-    echo "k3s ready at $(date)" > /home/ec2-user/k3s-ready.txt
-    chown ec2-user:ec2-user /home/ec2-user/k3s-ready.txt
-  EOF
+# Mark provisioning complete
+echo "k3s ready at $(date)" > /home/ec2-user/k3s-ready.txt
+chown ec2-user:ec2-user /home/ec2-user/k3s-ready.txt
+EOF
 }
 
 resource "aws_instance" "app" {
