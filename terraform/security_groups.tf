@@ -14,6 +14,18 @@ resource "aws_security_group" "ec2" {
     cidr_blocks = [var.home_ip_cidr]
   }
 
+  # CAPSTONE DEMO ONLY: SSH from GitHub Actions runners
+  # GitHub Actions uses dynamic IPs across many ranges, so we open SSH to the world
+  # for CI/CD. Production: use AWS SSM Session Manager or a self-hosted GitHub runner
+  # inside the VPC, eliminating this rule entirely.
+  ingress {
+    description = "SSH from GitHub Actions (CI/CD)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # HTTP — public
   ingress {
     description = "HTTP"
