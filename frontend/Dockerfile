@@ -31,7 +31,8 @@ RUN npm run build
 # ============================================
 # STAGE 2: Serve with nginx
 # ============================================
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:alpine AS runtime
+# Note: alpine subimages get rolling updates. CI uses --pull to fetch latest patches.
 
 # Copy nginx config for SPA routing (described below)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
