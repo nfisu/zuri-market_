@@ -42,6 +42,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
+          pull: true     # ← NEW
           tags: |
             nfisu/zuri-market-backend:${{ env.IMAGE_TAG }}
             nfisu/zuri-market-backend:latest
@@ -54,6 +55,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          pull: true     # ← NEW
           tags: |
             nfisu/zuri-market-frontend:${{ env.IMAGE_TAG }}
             nfisu/zuri-market-frontend:latest
