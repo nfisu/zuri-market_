@@ -150,4 +150,4 @@ zuri-market/
 
 Educational project — DevOps Bootcamp 2026.
 
-Thank you.
+Thank you
