@@ -149,3 +149,5 @@ zuri-market/
 ## License
 
 Educational project — DevOps Bootcamp 2026.
+
+Thank you.
